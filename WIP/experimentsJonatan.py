@@ -107,8 +107,8 @@ class AStar_Solver:
 # We check if we are in the main file
 if __name__ == "__main__":
     # We then set the start and goal state
-    start1 = "ecbda"
-    goal1 = "dabce"
+    start1 = "eW rl!dHlloo"
+    goal1 = "Hello World!"
     # Indicator that program is running
     print("starting...")
     # Initialize the solver
