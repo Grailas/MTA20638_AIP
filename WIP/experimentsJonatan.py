@@ -1,10 +1,10 @@
 # A data structure, that organises the items based on priority
-from Queue import PriorityQueue
+from queue import PriorityQueue
 
 # Base class to store imparitive stuff for A*
 class State(object):
     # The start, goal, and solver is used to set a manual start state, if we do not have a parent for initial start state
-    def__int__(self, value, parent, start = 0, goal = 0):
+    def __init__(self, value, parent, start = 0, goal = 0):
         # Children is a list of neighboring possibilities
         self.children = []
         # Current parent
@@ -22,7 +22,6 @@ class State(object):
             self.start = parent.start
             # Store goal state
             self.goal = parent.goal
-        
         #If there is no parent, we run the else statement 
         else:
             # We start a path, that is a list of objects -> start with current value
@@ -39,7 +38,7 @@ class State(object):
 
 
 class State_String(State):
-    def__int__(self, value, parent, start = 0, goal = 0):
+    def __init__(self, value, parent, start = 0, goal = 0):
         # Constructor -> initialise base class = State class
         super(State_String, self).__init__(value, parent, start, goal)
         # Overwrite distance variable
@@ -59,32 +58,32 @@ class State_String(State):
     def CreateChildren(self):
         # If there is no children, then we create some
         if not self.children:
-            for i in xrange(len(self.goal)-1):
+            for i in range(len(self.goal)-1):
                 val = self.value
                 val = val[:i] + val[i+1] + val[i] + val[i+2:]
                 child = State_String(val, self)
                 self.children.append(child)
 
 class AStar_Solver:
-    def__int__(self, start, goal):
+    def __init__(self, start, goal):
         # Store the solution from getting from start to goal
         self.path = []
         # Keeps track of all visited children
         self.visitedQueue = []
-        self.PriorityQueue = PriorityQueue()
+        self.priorityQueue = PriorityQueue()
         self.start = start 
-        self.goal = goal 
+        self.goal = goal
 
     def Solve(self):
-        startState = State_String(self.start), 0, self.start, self.goal)
+        startState = State_String(self.start, 0, self.start, self.goal)
         # Used to create IDs for children
         count = 0
         # Adds whatever we toss in - we pass in a tupple = 0 (priority number), count () and startState (contain all our states)
-        self.PriorityQueue.put((0, count, startState))
+        self.priorityQueue.put((0, count, startState))
         # While the path is empty and the priorityQueue has a size, we continue through the loop
-        while(not self.path and self.PriorityQueue.qsize()):
+        while(not self.path and self.priorityQueue.qsize()):
             # We access the startState, and creates a child for it
-            closestChild = self.PriorityQueue.get()[2]
+            closestChild = self.priorityQueue.get()[2]
             closestChild.CreateChildren()
             # We then add this child to the visitedQueue -> keeps track of visited children
             self.visitedQueue.append(closestChild.value)
@@ -98,25 +97,24 @@ class AStar_Solver:
                         # we have our solution, so we set our path to the childs path
                         self.path = child.path
                         break
-                    self.PriorityQueue.put((child.dist, count, child))
+                    self.priorityQueue.put((child.dist, count, child))
         # The priorityQueue broke, and there is an error
         if not self.path:
-            print "Goal of " + self.goal + " is not possible!"
+            print("Goal of " + self.goal + " is not possible!")
         return self.path
-
 # ========================================================
 # Main -> calls everything into existence
 # We check if we are in the main file
 if __name__ == "__main__":
     # We then set the start and goal state
-    start1 = "hma"
-    goal1 = "ham"
+    start1 = "ecbda"
+    goal1 = "dabce"
     # Indicator that program is running
-    print 'starting...'
+    print("starting...")
     # Initialize the solver
     a = AStar_Solver(start1, goal1)
     # Calls main function to solve the problem
     a.Solve()
     # Output the results
-    for i in xrange(len(a.path)):
-        print "%d) " %i + a.path[i]
+    for i in range(len(a.path)):
+        print("%d) " %i + a.path[i])
