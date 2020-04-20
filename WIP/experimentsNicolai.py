@@ -1,5 +1,5 @@
-import numpy as np
-import random
+#import numpy as np
+#import random
 from queue import PriorityQueue
 
 class State(object):
@@ -18,10 +18,10 @@ class State(object):
             self.start = start
             self.goal = goal
         
-        def GetDist(self):
-            pass
-        def CreateChildren(self):
-            pass
+    def GetDist(self):
+        pass
+    def CreateChildren(self):
+        pass
 
 class State_String(State):
     def __init__(self, value, parent, start = 0, goal = 0):
@@ -73,8 +73,8 @@ class AStar_Solver:
         return self.path
 
 if __name__ == "__main__":
-    start1 = "ecbda"
-    goal1 = "dabce"
+    start1 = "!HWod eolrll"
+    goal1 = "Hello World!"
     print("starting...")
     a = AStar_Solver(start1,goal1)
     a.Solve()
