@@ -28,7 +28,6 @@ level_graph = []  # 1D list of nodes
 level_height = len(level_layout)
 level_width = len(level_layout[0])
 
-
 dog_start = (None, None)
 goal = (None, None)
 
@@ -38,7 +37,7 @@ def generate_level_nodes():
         # level_graph.append([])
         for x in range(level_width):
             new_node = Node(x, y, level_layout[y][x])
-            level_graph.append(new_node) # level_graph[-1]
+            level_graph.append(new_node)  # level_graph[-1]
 
             if level_layout[y][x] == 'd':
                 global dog_start
@@ -48,7 +47,6 @@ def generate_level_nodes():
                 global goal
                 goal = new_node.location_to_tuple()
                 print("Goal is at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
-
 
 
 def get_node_from_location_tuple(location):  # shortcut for getting a node from graph at a specific coordinate
@@ -106,7 +104,7 @@ def heuristic(a: tuple, b: tuple):
 
 
 def a_star_search(graph, start: tuple, goal: tuple):
-    frontier = PriorityQueue()  #queue of prioritized frontier nodes
+    frontier = PriorityQueue()  # queue of prioritized frontier nodes
     frontier.put((0, start))  # put the start location in the queue with priority 0 (no cost)
     came_from = {}  # stores location traversals in a dictionary, using (x, y) tuples as keys
     cost_so_far = {}  # stores path costs in a dictionary, using (x, y) tuples as keys
@@ -126,10 +124,11 @@ def a_star_search(graph, start: tuple, goal: tuple):
             new_cost = cost_so_far[current[1]] + 1  # all costs are currently just 1
 
             neighbor = next.location_to_tuple()
-            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:  # if the neighbor location hasn't been visited
+            if neighbor not in cost_so_far or new_cost < cost_so_far[
+                neighbor]:  # if the neighbor location hasn't been visited
                 #  before, or this new path to the neighbor location has a lower cost than when it was last visited
                 cost_so_far[neighbor] = new_cost  # store the new cost, using this location as key
-                priority = new_cost + heuristic(goal, neighbor)  # uses the heuristic to prioritize for continuing this path
+                priority = new_cost + heuristic(goal, neighbor)  # uses heuristic to prioritize for continuing this path
                 new_frontier_element = (priority, neighbor)
                 frontier.put(new_frontier_element)  # add this location to the frontier with the given priority
                 came_from[neighbor] = current  # store which previous node we came from, using this node as key
@@ -137,6 +136,37 @@ def a_star_search(graph, start: tuple, goal: tuple):
     return came_from, cost_so_far  # return the dictionaries containing the paths and costs
 
 
-came_from, cost_so_far = a_star_search(level_graph, dog_start, goal )
-print(came_from)
-print(cost_so_far)
+def reconstruct_path(came_from, start: tuple, goal: tuple):
+    current = goal  # we start reconstructing from goal
+    path = []
+    while current != start:  # as long as we haven't reached start
+        path.append(current)  # append the current location to the path
+        current = came_from[current][1]  # get the location we came from to reach this point
+    path.append(start)  # append the start to the list
+    path.reverse()  # flip the order, so it runs from start to goal
+    return path
+
+
+def locations_to_direction_char(to_loc: tuple, from_loc: tuple):
+    char_dict = {(0, -1): '^',
+                 (1, 0): '>',
+                 (0, 1): 'v',
+                 (-1, 0): '<'}
+    dir = (to_loc[0] - from_loc[0], to_loc[1] - from_loc[1])
+    return char_dict[dir]
+
+
+def path_to_directions(path):
+    directions = []
+    for i in range(len(path)-1):
+        to_loc, from_loc = path[i+1], path[i]
+        directions.append(locations_to_direction_char(to_loc, from_loc))
+    return directions
+
+
+came_from, cost_so_far = a_star_search(level_graph, dog_start, goal)
+
+path = reconstruct_path(came_from, dog_start, goal)
+
+print(path)
+print(path_to_directions(path))
