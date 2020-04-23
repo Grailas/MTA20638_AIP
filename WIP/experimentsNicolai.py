@@ -1,7 +1,9 @@
-#import numpy as np
-#import random
+import numpy as np
+import random
 from queue import PriorityQueue
 
+#A* 
+'''
 class State(object):
     def __init__(self, value, parent, start = 0 , goal = 0):
         self.children = []
@@ -80,24 +82,125 @@ if __name__ == "__main__":
     a.Solve()
     for i in range(len(a.path)):
         print("%d) " %i + a.path[i])
+'''
 
+#Test world space with above A*
 '''
 def make_playspace():
     #- Initialize world space
     global world_space 
-    world_space = np.zeros(shape=(10,6))
+    global goal_space1
+    world_space = [
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', 'g', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', 's', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', 'd']]
 
+    goal_space1 = [
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', 'g', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', 's', '_', '_', '_', '_'],
+    ['_', 'd', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_']]
+
+    
     #- Randomize goal position
-    goal_pos = random.randint(0,9), random.randint(0,5)
-    world_space[goal_pos[0], goal_pos[1]] = 1
+    #goal_pos = random.randint(0,9), random.randint(0,5)
+    #world_space[goal_pos[0]+1][goal_pos[1]] = 'g'
 
     #- Place sheep
-    if(goal_pos[0] == 9):
-        world_space[goal_pos[0] - 1, goal_pos[1]] = 2
-    else:
-        world_space[goal_pos[0]+1, goal_pos[1]] = 2
+    #if(goal_pos[0] == 9):
+    #    world_space[goal_pos[0]-1][goal_pos[1]] = 's'
+    #else:
+    #    world_space[goal_pos[0]+1][goal_pos[1]] = 's'
 
 make_playspace()
 
-print(world_space)
+world_space_test = "_d_______"
+goal_space_test = "________d"
+a = AStar_Solver(world_space_test,goal_space_test)
+a.Solve()
+for i in range(len(a.path)):
+    print("%d) " %i + a.path[i])
 '''
+
+#A* - redblobgames.com/pathfinding/a-star/implementation.html
+from experimentsNicolai2 import *
+
+#Sets up a 10x10 grid
+g = GridWithWeights(50, 50)
+
+#randomizes the sheep position and fold position
+sheep_position = (random.randint(0,49), random.randint(0,49))
+fold_position = (random.randint(0,10), random.randint(0,10))
+
+#Define walls and goal position based on the sheep position.
+if sheep_position[0] == fold_position[0] and sheep_position[1] > fold_position[1]:
+    if sheep_position[0] == 0:
+        g.walls = [(sheep_position[0], sheep_position[1] - 1), (sheep_position[0] + 1, sheep_position[1])]
+        goal_position = (sheep_position[0], sheep_position[1] + 1)
+    else:
+        g.walls = [(sheep_position[0], sheep_position[1] - 1), (sheep_position[0] + 1, sheep_position[1]), (sheep_position[0] - 1, sheep_position[1])]
+        goal_position = (sheep_position[0], sheep_position[1] + 1)
+
+elif sheep_position[0] > fold_position[0] and sheep_position[1] == fold_position[1]:
+    if sheep_position[1] == 0:
+        g.walls = [(sheep_position[0] - 1, sheep_position[1]), (sheep_position[0], sheep_position[1] + 1)]
+        goal_position = (sheep_position[0] + 1, sheep_position[1])
+    else:
+        g.walls = [(sheep_position[0] - 1, sheep_position[1]), (sheep_position[0], sheep_position[1] + 1), (sheep_position[0], sheep_position[1] - 1)]
+        goal_position = (sheep_position[0] + 1, sheep_position[1])
+
+elif sheep_position[0] > fold_position[0] and sheep_position[1] > fold_position[1]:
+    g.walls = [(sheep_position[0] - 1, sheep_position[1]), (sheep_position[0], sheep_position[1] - 1)]
+    goal_position = (sheep_position[0] + 1, sheep_position[1])
+
+elif sheep_position[0] < fold_position[0] and sheep_position[1] > fold_position[1]:
+    g.walls = [(sheep_position[0] + 1, sheep_position[1]), (sheep_position[0], sheep_position[1] - 1)]
+    goal_position = (sheep_position[0] + 1, sheep_position[1])
+
+elif sheep_position[0] > fold_position[0] and sheep_position[1] < fold_position[1]:
+    g.walls = [(sheep_position[0] - 1, sheep_position[1]), (sheep_position[0], sheep_position[1] + 1)]
+    goal_position = (sheep_position[0] + 1, sheep_position[1])
+
+if sheep_position[0] < fold_position[0] and sheep_position[1] < fold_position[1]:
+    g.walls = [(sheep_position[0] + 1, sheep_position[1]), (sheep_position[0], sheep_position[1] + 1)]
+    try:
+        goal_position = (sheep_position[0] - 1, sheep_position[1])
+    except:
+        print('woops')
+    else:
+        goal_position = (sheep_position[0], sheep_position[1] - 1)
+
+#Function for moving the sheep - not working yet(?)
+def moveSheep():
+    if goal_position[0] > sheep_position[0] and goal_position[1] == sheep_position[1]:
+        sheep_position = sheep_position + (-1, 0)
+    elif goal_position[0] == sheep_position[0] and goal_position[1] > sheep_position[1]:
+        sheep_position = sheep_position + (0, -1)
+    elif goal_position[0] == sheep_position[0] and goal_position[1] < sheep_position[1]:
+        sheep_position = sheep_position + (0, 1)
+    elif goal_position[0] < sheep_position[0] and goal_position[1] == sheep_position[1]:
+        sheep_position = sheep_position + (1, 0)
+
+print(sheep_position, " ", goal_position, " ", fold_position)
+
+start, goal = (49, 49), goal_position
+
+#starts pathfinding and prints grid
+came_from, cost_so_far = a_star_search(g, start, goal)
+draw_grid(g, width=3, point_to=came_from, start=start, goal=goal, sheep=sheep_position, fold=fold_position)
+print()
+draw_grid(g, width=3, number=cost_so_far, start=start, goal=goal)
+print()
