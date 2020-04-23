@@ -1,16 +1,17 @@
 from queue import PriorityQueue
 
+#  legend: _ = open, # = blocked, g = goal, s = sheep, d = dog
 level_layout = [
-    ['_', '_', '_', '_', '_', '_'],
-    ['_', '_', 'g', '_', '_', '_'],
-    ['_', '_', '_', '_', '_', '_'],
-    ['_', '_', '_', '_', '_', '_'],
-    ['_', '_', '_', '_', '_', '_'],
-    ['_', '_', 's', '_', '_', '_'],
-    ['_', '_', '_', '_', '_', '_'],
-    ['_', '_', '_', '_', '_', '_'],
-    ['_', '_', '_', '_', 'd', '_'],
-    ['_', '_', '_', '_', '_', '_']]
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', 'g', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', 's', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', '_', '_', '_', '#', '_', 'd', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', '_', '_']]
 
 
 class Node:
@@ -22,6 +23,19 @@ class Node:
 
     def location_to_tuple(self):
         return self.x, self.y
+
+    def connect_neighbors(self):
+        if self.content != '#':
+            directions = [[0, -1], [1, 0], [0, 1], [-1, -0]]  # up, right, down, left
+            result = []
+            print("Finding neighbors for (" + str(self.x) + ", " + str(self.y) + ")...")
+            for direction in directions:
+                if -1 < self.y + direction[1] < level_height:
+                    if -1 < self.x + direction[0] < level_width:
+                        neighbor = get_node_from_location_tuple((self.x + direction[0], self.y + direction[1]))
+                        if neighbor.content != '#':
+                            self.neighbors.append(neighbor)
+                            print("Neighbor at (" + str(neighbor.x) + ", " + str(neighbor.y) + ")")
 
 
 level_graph = []  # 1D list of nodes
@@ -55,22 +69,10 @@ def get_node_from_location_tuple(location):  # shortcut for getting a node from 
     return level_graph[i]
 
 
-def neighbors(node: Node):  # finds neighbors for the node
-    directions = [[0, -1], [1, 0], [0, 1], [-1, -0]]  # up, right, down, left
-    result = []
-    print("Finding neighbors for (" + str(node.x) + ", " + str(node.y) + ")...")
-    for direction in directions:
-        if -1 < node.y + direction[1] < level_height:
-            if -1 < node.x + direction[0] < level_width:
-                neighbor = get_node_from_location_tuple((node.x + direction[0], node.y + direction[1]))
-                node.neighbors.append(neighbor)
-                print("Neighbor at (" + str(neighbor.x) + ", " + str(neighbor.y) + ")")
-
-
 def connect_neighbors():  # goes through each node to find their neighbours
     for y in range(level_height):
         for x in range(level_width):
-            neighbors(get_node_from_location_tuple((x, y)))
+            get_node_from_location_tuple((x, y)).connect_neighbors()
             print()
     print("Graph complete.")
 
@@ -124,18 +126,18 @@ def a_star_search(graph, start: tuple, goal: tuple):
             new_cost = cost_so_far[current[1]] + 1  # all costs are currently just 1
 
             neighbor = next.location_to_tuple()
-            if neighbor not in cost_so_far or new_cost < cost_so_far[
-                neighbor]:  # if the neighbor location hasn't been visited
-                #  before, or this new path to the neighbor location has a lower cost than when it was last visited
-                cost_so_far[neighbor] = new_cost  # store the new cost, using this location as key
-                priority = new_cost + heuristic(goal, neighbor)  # uses heuristic to prioritize for continuing this path
-                new_frontier_element = (priority, neighbor)
-                frontier.put(new_frontier_element)  # add this location to the frontier with the given priority
-                came_from[neighbor] = current  # store which previous node we came from, using this node as key
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:  # if neighbor location not visited
+                #  before, or new path to neighbor location has lower cost than when last visited
+                cost_so_far[neighbor] = new_cost  # store new cost, using this location as key
+                priority = new_cost + heuristic(goal, neighbor)  # use heuristic to prioritize for continuing this path
+                new_frontier_element = (priority, neighbor)  # make new frontier element with priority
+                frontier.put(new_frontier_element)  # add to frontier
+                came_from[neighbor] = current  # store which previous node we came from, using this location as key
 
     return came_from, cost_so_far  # return the dictionaries containing the paths and costs
 
 
+#  reads the came_from list and returns the found path
 def reconstruct_path(came_from, start: tuple, goal: tuple):
     current = goal  # we start reconstructing from goal
     path = []
@@ -147,6 +149,7 @@ def reconstruct_path(came_from, start: tuple, goal: tuple):
     return path
 
 
+#  given two locations, returns a char representing the movement direction to-from
 def locations_to_direction_char(to_loc: tuple, from_loc: tuple):
     char_dict = {(0, -1): '^',
                  (1, 0): '>',
@@ -156,10 +159,11 @@ def locations_to_direction_char(to_loc: tuple, from_loc: tuple):
     return char_dict[dir]
 
 
+#  given a path, returns a list of directions in the form of chars
 def path_to_directions(path):
     directions = []
-    for i in range(len(path)-1):
-        to_loc, from_loc = path[i+1], path[i]
+    for i in range(len(path) - 1):
+        to_loc, from_loc = path[i + 1], path[i]
         directions.append(locations_to_direction_char(to_loc, from_loc))
     return directions
 
