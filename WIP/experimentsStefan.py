@@ -1,17 +1,31 @@
 from queue import PriorityQueue
 
-#  legend: _ = open, # = blocked, g = goal, s = sheep, d = dog
+# level information
+#  legend: _ = open, # = blocked, f = fold, s = sheep, d = dog
 level_layout = [
     ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
-    ['_', '_', 'g', '_', '_', '_', '_', '_', '_'],
+    ['_', '_', 'f', '_', '_', '_', '_', '_', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
     ['_', '_', 's', '_', '_', '_', '_', '_', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_'],
-    ['_', '_', '_', '_', '_', '#', '_', 'd', '_'],
+    ['_', '_', '_', '_', '_', '_', '_', 'd', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_']]
+
+level_graph = []  # 1D list of nodes
+level_height = len(level_layout)
+level_width = len(level_layout[0])
+
+
+# entity locations
+dog_start = (None, None)
+fold = (None, None)
+sheep_start = (None, None)
+
+
+debug = False
 
 
 class Node:
@@ -24,79 +38,84 @@ class Node:
     def location_to_tuple(self):
         return self.x, self.y
 
-    def connect_neighbors(self):
+    #  connects this node to neighboring node in given graph
+    def connect_neighbors(self, graph):
         if self.content != '#':
             directions = [[0, -1], [1, 0], [0, 1], [-1, -0]]  # up, right, down, left
             result = []
-            print("Finding neighbors for (" + str(self.x) + ", " + str(self.y) + ")...")
+            if debug:
+                print("Finding neighbors for (" + str(self.x) + ", " + str(self.y) + ")...")
             for direction in directions:
                 if -1 < self.y + direction[1] < level_height:
                     if -1 < self.x + direction[0] < level_width:
-                        neighbor = get_node_from_location_tuple((self.x + direction[0], self.y + direction[1]))
+                        neighbor = get_node_from_location_tuple(graph, (self.x + direction[0], self.y + direction[1]))
                         if neighbor.content != '#':
                             self.neighbors.append(neighbor)
-                            print("Neighbor at (" + str(neighbor.x) + ", " + str(neighbor.y) + ")")
+                            if debug:
+                                print("Neighbor at (" + str(neighbor.x) + ", " + str(neighbor.y) + ")")
 
 
-level_graph = []  # 1D list of nodes
-level_height = len(level_layout)
-level_width = len(level_layout[0])
-
-dog_start = (None, None)
-goal = (None, None)
-
-
-def generate_level_nodes():
+# given an empty graph, and a level layout, generates and appends the resulting graph node structure
+# https://robertheaton.com/2014/02/09/pythons-pass-by-object-reference-as-explained-by-philip-k-dick/
+def generate_level_nodes(graph: list, layout: list):
     for y in range(level_height):
-        # level_graph.append([])
         for x in range(level_width):
             new_node = Node(x, y, level_layout[y][x])
-            level_graph.append(new_node)  # level_graph[-1]
+            graph.append(new_node)  # level_graph[-1]
 
-            if level_layout[y][x] == 'd':
+            if layout[y][x] == 'd':
                 global dog_start
                 dog_start = new_node.location_to_tuple()
                 print("Dog starts at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
-            elif level_layout[y][x] == 'g':
-                global goal
-                goal = new_node.location_to_tuple()
-                print("Goal is at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
+            elif layout[y][x] == 's':
+                global sheep_start
+                sheep_start = new_node.location_to_tuple()
+                print("Sheep starts at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
+            elif layout[y][x] == 'f':
+                global fold
+                fold = new_node.location_to_tuple()
+                print("Fold is at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
 
 
-def get_node_from_location_tuple(location):  # shortcut for getting a node from graph at a specific coordinate
+# gets a node from graph at a specific coordinate
+def get_node_from_location_tuple(graph, location):
     x, y = location
     i = y * level_width + x
-    return level_graph[i]
+    return graph[i]
 
 
-def connect_neighbors():  # goes through each node to find their neighbours
+# goes through each node in a graph to find their neighbours
+def connect_neighbors(graph):
     for y in range(level_height):
         for x in range(level_width):
-            get_node_from_location_tuple((x, y)).connect_neighbors()
-            print()
+            get_node_from_location_tuple(graph, (x, y)).connect_neighbors(graph)
+            if debug:
+                print()
     print("Graph complete.")
 
 
-def print_level():
+# prints the level from graph
+def print_nodes(graph):
     for y in range(level_height):
         to_print = ""
         for x in range(level_width):
-            to_print += level_layout[y][x] + " "
+            to_print += get_node_from_location_tuple(graph, (x, y)).content + " "
         print(to_print)
 
 
-def print_nodes():
+# prints the level from graph, including a path
+def print_nodes_with_path(graph, path, directions):
     for y in range(level_height):
         to_print = ""
         for x in range(level_width):
-            to_print += get_node_from_location_tuple((x, y)).content + " "
+            if (x, y) in path:
+                if path.index((x, y)) < len(directions):
+                    to_print += directions[path.index((x, y))] + " "
+                else:
+                    to_print += "x "
+            else:
+                to_print += get_node_from_location_tuple(graph, (x, y)).content + " "
         print(to_print)
-
-
-generate_level_nodes()
-connect_neighbors()
-print_nodes()
-
 
 # Manhattan distance on a square grid
 def heuristic(a: tuple, b: tuple):
@@ -105,6 +124,7 @@ def heuristic(a: tuple, b: tuple):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
+# given a graph of locations, a starting point and a goal point, search for an optimal path
 def a_star_search(graph, start: tuple, goal: tuple):
     frontier = PriorityQueue()  # queue of prioritized frontier nodes
     frontier.put((0, start))  # put the start location in the queue with priority 0 (no cost)
@@ -117,10 +137,11 @@ def a_star_search(graph, start: tuple, goal: tuple):
         current = frontier.get()
 
         if current[1] == goal:  # if this node is the goal, we're done!
-            print("goal found")
+            if debug:
+                print("goal found")
             break
 
-        current_node = get_node_from_location_tuple(current[1])
+        current_node = get_node_from_location_tuple(graph, current[1])
 
         for next in current_node.neighbors:  # for each neighbor that current node has
             new_cost = cost_so_far[current[1]] + 1  # all costs are currently just 1
@@ -137,26 +158,45 @@ def a_star_search(graph, start: tuple, goal: tuple):
     return came_from, cost_so_far  # return the dictionaries containing the paths and costs
 
 
-#  reads the came_from list and returns the found path
-def reconstruct_path(came_from, start: tuple, goal: tuple):
-    current = goal  # we start reconstructing from goal
+#  reads the came_from list and returns the found path and costs
+def reconstruct_path(came_from, cost_so_far, start: tuple, goal: tuple):
+    path_current = goal  # we start reconstructing from goal
     path = []
-    while current != start:  # as long as we haven't reached start
-        path.append(current)  # append the current location to the path
-        current = came_from[current][1]  # get the location we came from to reach this point
-    path.append(start)  # append the start to the list
+    costs = []
+    while path_current != start:  # as long as we haven't reached start
+        path.append(path_current)  # append the current location to the path
+        costs.append(cost_so_far[path_current])  # append the associated cost to this point
+        path_current = came_from[path_current][1]  # get the location we came from to reach this point
+    path.append(start)  # append the start point to the list
+    costs.append(cost_so_far[start])  # append the start cost (should be 0) to the list
     path.reverse()  # flip the order, so it runs from start to goal
-    return path
+    costs.reverse()  # same with costs
+    return path, costs
 
 
-#  given two locations, returns a char representing the movement direction to-from
-def locations_to_direction_char(to_loc: tuple, from_loc: tuple):
+#  given two locations, returns a direction to-from as (x, y) tuple
+def locations_to_direction(to_loc: tuple, from_loc: tuple):
+    direction = (to_loc[0] - from_loc[0], to_loc[1] - from_loc[1])
+    return direction
+
+
+#  given a direction tuple, returns a char representing the movement direction
+def direction_to_char(direction: tuple):
     char_dict = {(0, -1): '^',
                  (1, 0): '>',
                  (0, 1): 'v',
                  (-1, 0): '<'}
-    dir = (to_loc[0] - from_loc[0], to_loc[1] - from_loc[1])
-    return char_dict[dir]
+    return char_dict[direction]
+
+
+# given a direction tuple, returns the opposite direction
+def reverse_direction(direction: tuple):
+    return (-direction[0], -direction[1])
+
+
+#  given two locations, returns a char representing the movement direction to-from
+def locations_to_direction_char(to_loc: tuple, from_loc: tuple):
+    return direction_to_char(locations_to_direction(to_loc, from_loc))
 
 
 #  given a path, returns a list of directions in the form of chars
@@ -168,9 +208,66 @@ def path_to_directions(path):
     return directions
 
 
-came_from, cost_so_far = a_star_search(level_graph, dog_start, goal)
+# given a sheep's path to a fold, returns a herding point for moving it the next step
+def get_herding_point(path):
+    next_dir = locations_to_direction(path[1], path[0])
+    rev_dir = reverse_direction(next_dir)
 
-path = reconstruct_path(came_from, dog_start, goal)
+    print(str(next_dir) + " " + str(rev_dir))
+    # add starting location together with the reverse direction
+    herding_point = tuple(map(lambda i, j: i + j, path[0], rev_dir))
 
-print(path)
-print(path_to_directions(path))
+    return herding_point
+
+
+def get_dog_level_layout(original_level, sheep_location, herding_point):
+    dog_level_layout = list(original_level)
+    directions = [[0, -1], [1, 0], [0, 1], [-1, -0]]  # up, right, down, left
+
+    # check locations around sheep
+    for direction in directions:
+        # ensure we are within the map
+        if -1 < sheep_location[1] + direction[1] < level_height:
+            if -1 < sheep_location[0] + direction[0] < level_width:
+                neighbor_location = tuple(map(lambda i, j: i + j, sheep_location, direction))
+                if neighbor_location != herding_point:
+                    dog_level_layout[neighbor_location[1]][neighbor_location[0]] = '#'
+
+    return dog_level_layout
+
+
+def run_sheepherder():
+    generate_level_nodes(level_graph, level_layout)
+    connect_neighbors(level_graph)
+    print_nodes(level_graph)
+
+    sheep_location = sheep_start
+    dog_location = dog_start
+
+    #loop should probably start around here
+
+    print(sheep_location)
+
+    sheep_came_from, sheep_cost_so_far = a_star_search(level_graph, sheep_location, fold)
+    sheep_path, sheep_costs = reconstruct_path(sheep_came_from, sheep_cost_so_far, sheep_location, fold)
+
+    herding_point = get_herding_point(sheep_path)
+
+    # dog information
+    dog_level_layout = get_dog_level_layout(level_layout, sheep_location, herding_point)
+    dog_graph = []  # 1D list of nodes
+    generate_level_nodes(dog_graph, dog_level_layout)
+    connect_neighbors(dog_graph)
+
+    dog_came_from, dog_cost_so_far = a_star_search(dog_graph, dog_start, herding_point)
+    dog_path, dog_costs = reconstruct_path(dog_came_from, dog_cost_so_far, dog_start, herding_point)
+
+    dog_directions = path_to_directions(dog_path)
+    print(dog_path)
+    print(dog_costs)
+    print(dog_directions)
+
+    print_nodes_with_path(level_graph, dog_path, dog_directions)
+
+
+run_sheepherder()
