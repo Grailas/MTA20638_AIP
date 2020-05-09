@@ -278,11 +278,11 @@ def run_sheepherder():
 
 
         if not auto_continue:
-            result = input('Press Y to next step, "N" to run till the end.')
-            if result.lower() == 'y':
-                continue
-            else:
+            result = input('Press Enter for next step, or type "N" to run till the end.')
+            print(result)
+            if result.lower() == "n":
                 auto_continue = True
+
 
 
         sheep_came_from, sheep_cost_so_far = a_star_search(level_graph, sheep_location, fold)
@@ -295,10 +295,9 @@ def run_sheepherder():
         print("Sheep path directions:", sheep_directions)
 
         if not auto_continue:
-            result = input('Press Y to next step, "N" to run till the end.')
-            if result.lower() == 'y':
-                continue
-            else:
+            result = input('Press Enter for next step, or type "N" to run till the end.')
+            print(result)
+            if result.lower() == "n":
                 auto_continue = True
 
         herding_point = get_herding_point(sheep_path)
@@ -321,10 +320,9 @@ def run_sheepherder():
         print("Dog path directions:", dog_directions)
 
         if not auto_continue:
-            result = input('Press Y to next step, "N" to run till the end.')
-            if result.lower() == 'y':
-                continue
-            else:
+            result = input('Press Enter for next step, or type "N" to run till the end.')
+            print(result)
+            if result.lower() == "n":
                 auto_continue = True
 
         print("Updating graph")
