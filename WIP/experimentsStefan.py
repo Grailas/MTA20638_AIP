@@ -243,8 +243,8 @@ def get_dog_level_layout(original_level, sheep_location, herding_point):
     return dog_level_layout
 
 
-
-def get_updated_graph(graph: list, dog_path: list, sheep_path: list):
+# returns updated graph, and new locations for dog and sheep
+def get_updated_scene(graph: list, dog_path: list, sheep_path: list):
     # clear old animal positions
     # dog
     get_node_from_location_tuple(graph, dog_path[0]).content = '_'
@@ -258,7 +258,7 @@ def get_updated_graph(graph: list, dog_path: list, sheep_path: list):
         global number_of_sheep
         number_of_sheep -= 1
 
-    return graph
+    return graph, dog_path[-1], sheep_path[1]
 
 
 def run_sheepherder():
@@ -289,7 +289,7 @@ def run_sheepherder():
         sheep_path, sheep_costs = reconstruct_path(sheep_came_from, sheep_cost_so_far, sheep_location, fold)
         sheep_directions = path_to_directions(sheep_path)
         print("Sheep path")
-        print_nodes_with_path(level_graph,sheep_path, sheep_directions)
+        print_nodes_with_path(level_graph, sheep_path, sheep_directions)
         print("Sheep path locations:", sheep_path)
         print("Sheep path costs:", sheep_costs)
         print("Sheep path directions:", sheep_directions)
@@ -326,7 +326,7 @@ def run_sheepherder():
                 auto_continue = True
 
         print("Updating graph")
-        level_graph = get_updated_graph(level_graph, dog_path, sheep_path)
+        level_graph, dog_location, sheep_location = get_updated_scene(level_graph, dog_path, sheep_path)
         print_nodes(level_graph)
 
 
