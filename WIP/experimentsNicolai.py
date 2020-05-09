@@ -99,7 +99,7 @@ while sheep_position != fold_position:
     dog_movement.append(goal)
     #Waits for keypress, 'y' runs through to the next step, anything else runs untill done.
     if self_press:
-        result = input('Y to next step, "N" to run till the end.')
+        result = input('Press Y to next step, "N" to run till the end.')
         if result.lower() == 'y':
             continue
         else:
