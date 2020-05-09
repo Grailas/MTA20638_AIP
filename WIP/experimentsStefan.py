@@ -27,6 +27,8 @@ sheep_start = (None, None)
 
 debug = False
 
+# do not change here
+number_of_sheep = 0
 
 class Node:
     def __init__(self, x, y, content):
@@ -42,7 +44,6 @@ class Node:
     def connect_neighbors(self, graph):
         if self.content != '#':
             directions = [[0, -1], [1, 0], [0, 1], [-1, -0]]  # up, right, down, left
-            result = []
             if debug:
                 print("Finding neighbors for (" + str(self.x) + ", " + str(self.y) + ")...")
             for direction in directions:
@@ -66,15 +67,20 @@ def generate_level_nodes(graph: list, layout: list):
             if layout[y][x] == 'd':
                 global dog_start
                 dog_start = new_node.location_to_tuple()
-                print("Dog starts at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
+                if debug:
+                    print("Dog starts at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
             elif layout[y][x] == 's':
                 global sheep_start
+                global number_of_sheep
                 sheep_start = new_node.location_to_tuple()
-                print("Sheep starts at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
+                number_of_sheep += 1
+                if debug:
+                    print("Sheep starts at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
             elif layout[y][x] == 'f':
                 global fold
                 fold = new_node.location_to_tuple()
-                print("Fold is at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
+                if debug:
+                    print("Fold is at (" + str(new_node.x) + ", " + str(new_node.y) + ")")
 
 
 # gets a node from graph at a specific coordinate
@@ -91,7 +97,8 @@ def connect_neighbors(graph):
             get_node_from_location_tuple(graph, (x, y)).connect_neighbors(graph)
             if debug:
                 print()
-    print("Graph complete.")
+    if debug:
+        print("Graph complete.")
 
 
 # prints the level from graph
@@ -212,8 +219,8 @@ def path_to_directions(path):
 def get_herding_point(path):
     next_dir = locations_to_direction(path[1], path[0])
     rev_dir = reverse_direction(next_dir)
-
-    print(str(next_dir) + " " + str(rev_dir))
+    if debug:
+        print(str(next_dir) + " " + str(rev_dir))
     # add starting location together with the reverse direction
     herding_point = tuple(map(lambda i, j: i + j, path[0], rev_dir))
 
@@ -236,7 +243,28 @@ def get_dog_level_layout(original_level, sheep_location, herding_point):
     return dog_level_layout
 
 
+
+def get_updated_graph(graph: list, dog_path: list, sheep_path: list):
+    # clear old animal positions
+    # dog
+    get_node_from_location_tuple(graph, dog_path[0]).content = '_'
+    get_node_from_location_tuple(graph, dog_path[-1]).content = 'd'
+    # sheep
+    get_node_from_location_tuple(graph, sheep_path[0]).content = '_'
+    sheep_target_node = get_node_from_location_tuple(graph, sheep_path[1])
+    if sheep_target_node.content != 'g':
+        sheep_target_node.content = 's'
+    else:
+        global number_of_sheep
+        number_of_sheep -= 1
+
+    return graph
+
+
 def run_sheepherder():
+    #  setup
+    print("Setting up scene")
+    global level_graph
     generate_level_nodes(level_graph, level_layout)
     connect_neighbors(level_graph)
     print_nodes(level_graph)
@@ -244,30 +272,65 @@ def run_sheepherder():
     sheep_location = sheep_start
     dog_location = dog_start
 
-    #loop should probably start around here
+    auto_continue = False
 
-    print(sheep_location)
+    while number_of_sheep > 0:
 
-    sheep_came_from, sheep_cost_so_far = a_star_search(level_graph, sheep_location, fold)
-    sheep_path, sheep_costs = reconstruct_path(sheep_came_from, sheep_cost_so_far, sheep_location, fold)
 
-    herding_point = get_herding_point(sheep_path)
+        if not auto_continue:
+            result = input('Press Y to next step, "N" to run till the end.')
+            if result.lower() == 'y':
+                continue
+            else:
+                auto_continue = True
 
-    # dog information
-    dog_level_layout = get_dog_level_layout(level_layout, sheep_location, herding_point)
-    dog_graph = []  # 1D list of nodes
-    generate_level_nodes(dog_graph, dog_level_layout)
-    connect_neighbors(dog_graph)
 
-    dog_came_from, dog_cost_so_far = a_star_search(dog_graph, dog_start, herding_point)
-    dog_path, dog_costs = reconstruct_path(dog_came_from, dog_cost_so_far, dog_start, herding_point)
+        sheep_came_from, sheep_cost_so_far = a_star_search(level_graph, sheep_location, fold)
+        sheep_path, sheep_costs = reconstruct_path(sheep_came_from, sheep_cost_so_far, sheep_location, fold)
+        sheep_directions = path_to_directions(sheep_path)
+        print("Sheep path")
+        print_nodes_with_path(level_graph,sheep_path, sheep_directions)
+        print("Sheep path locations:", sheep_path)
+        print("Sheep path costs:", sheep_costs)
+        print("Sheep path directions:", sheep_directions)
 
-    dog_directions = path_to_directions(dog_path)
-    print(dog_path)
-    print(dog_costs)
-    print(dog_directions)
+        if not auto_continue:
+            result = input('Press Y to next step, "N" to run till the end.')
+            if result.lower() == 'y':
+                continue
+            else:
+                auto_continue = True
 
-    print_nodes_with_path(level_graph, dog_path, dog_directions)
+        herding_point = get_herding_point(sheep_path)
+
+        # dog information
+        dog_level_layout = get_dog_level_layout(level_layout, sheep_location, herding_point)
+        dog_graph = []  # 1D list of nodes
+        generate_level_nodes(dog_graph, dog_level_layout)
+        connect_neighbors(dog_graph)
+
+        dog_came_from, dog_cost_so_far = a_star_search(dog_graph, dog_location, herding_point)
+        dog_path, dog_costs = reconstruct_path(dog_came_from, dog_cost_so_far, dog_location, herding_point)
+
+        dog_directions = path_to_directions(dog_path)
+
+        print("Dog path")
+        print_nodes_with_path(level_graph, dog_path, dog_directions)
+        print("Dog path locations:", dog_path)
+        print("Dog path costs:", dog_costs)
+        print("Dog path directions:", dog_directions)
+
+        if not auto_continue:
+            result = input('Press Y to next step, "N" to run till the end.')
+            if result.lower() == 'y':
+                continue
+            else:
+                auto_continue = True
+
+        print("Updating graph")
+        level_graph = get_updated_graph(level_graph, dog_path, sheep_path)
+        print_nodes(level_graph)
+
 
 
 run_sheepherder()
