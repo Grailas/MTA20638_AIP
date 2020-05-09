@@ -42,7 +42,7 @@ def draw_tile(graph, id, style, width):
         if x2 == x1 - 1: r = "<"
         if y2 == y1 + 1: r = "v"
         if y2 == y1 - 1: r = "^"
-    if 'start' in style and id == style['start']: r = "S"
+    if 'start' in style and id == style['start']: r = "D"
     if 'goal' in style and id == style['goal']: r = "G"
     if 'sheep' in style and id == style['sheep']: r = "S"
     if 'fold' in style and id == style['fold']: r = "F"
