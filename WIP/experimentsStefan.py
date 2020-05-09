@@ -1,4 +1,5 @@
 from queue import PriorityQueue
+import copy
 
 # level information
 #  legend: _ = open, # = blocked, f = fold, s = sheep, d = dog
@@ -228,7 +229,7 @@ def get_herding_point(path):
 
 
 def get_dog_level_layout(original_level, sheep_location, herding_point):
-    dog_level_layout = list(original_level)
+    dog_level_layout = copy.deepcopy(original_level)  # really stupid, but other options pass references and break map
     directions = [[0, -1], [1, 0], [0, 1], [-1, -0]]  # up, right, down, left
 
     # check locations around sheep
@@ -276,14 +277,11 @@ def run_sheepherder():
 
     while number_of_sheep > 0:
 
-
         if not auto_continue:
             result = input('Press Enter for next step, or type "N" to run till the end.')
             print(result)
             if result.lower() == "n":
                 auto_continue = True
-
-
 
         sheep_came_from, sheep_cost_so_far = a_star_search(level_graph, sheep_location, fold)
         sheep_path, sheep_costs = reconstruct_path(sheep_came_from, sheep_cost_so_far, sheep_location, fold)
