@@ -253,7 +253,7 @@ def get_updated_scene(graph: list, dog_path: list, sheep_path: list):
     # sheep
     get_node_from_location_tuple(graph, sheep_path[0]).content = '_'
     sheep_target_node = get_node_from_location_tuple(graph, sheep_path[1])
-    if sheep_target_node.content != 'g':
+    if sheep_target_node.content != 'f':
         sheep_target_node.content = 's'
     else:
         global number_of_sheep
