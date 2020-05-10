@@ -412,7 +412,8 @@ def train_RL():
         if i % 100 == 0:
             print(f"Episode: {i}")
 
-    print("Training finished.\n")
+    print("Training finished.\nResulting q_table is as follows...")
+    print(q_table)
 
 
 train_RL()
