@@ -185,8 +185,8 @@ level_layout[dog_position[1]][dog_position[0]] = 'd'
 
 
 level_graph = []  # 1D list of nodes
-level_height = len(level_layout)
-level_width = len(level_layout[0])
+level_height = len(comp_layout)
+level_width = len(comp_layout[0])
 
 # entity locations
 dog_start = (None, None)
@@ -195,8 +195,8 @@ sheep_start = (None, None)
 
 debug = False
 
-number_of_sheep = sum(y.count('s') for y in level_layout)
-
+number_of_sheep = sum(y.count('s') for y in comp_layout)
+total_cost = 0
 
 class Node:
     def __init__(self, x, y, content):
@@ -229,7 +229,7 @@ class Node:
 def generate_level_nodes(graph: list, layout: list):
     for y in range(level_height):
         for x in range(level_width):
-            new_node = Node(x, y, level_layout[y][x])
+            new_node = Node(x, y, comp_layout[y][x])
             graph.append(new_node)  # level_graph[-1]
 
             if layout[y][x] == 'd':
@@ -432,8 +432,8 @@ def get_updated_scene(graph: list, dog_path: list, sheep_path: list):
 def run_sheepherder():
     #  setup
     print("Setting up scene")
-    global level_graph
-    generate_level_nodes(level_graph, level_layout)
+    global level_graph, total_cost
+    generate_level_nodes(level_graph, comp_layout)
     connect_neighbors(level_graph)
     print_nodes(level_graph)
 
@@ -468,7 +468,7 @@ def run_sheepherder():
         herding_point = get_herding_point(sheep_path)
 
         # dog information
-        dog_level_layout = get_dog_level_layout(level_layout, sheep_location, herding_point)
+        dog_level_layout = get_dog_level_layout(comp_layout, sheep_location, herding_point)
         dog_graph = []  # 1D list of nodes
         generate_level_nodes(dog_graph, dog_level_layout)
         connect_neighbors(dog_graph)
@@ -482,6 +482,7 @@ def run_sheepherder():
         print_nodes_with_path(level_graph, dog_path, dog_directions)
         print("Dog path locations:", dog_path)
         print("Dog path costs:", dog_costs)
+        total_cost += dog_costs[-1]
         print("Dog path directions:", dog_directions)
 
         if not auto_continue:
@@ -497,3 +498,4 @@ def run_sheepherder():
 
 run_sheepherder()
 print('Sheep is in the fold, good job dog!')
+print('Total spaces moved by dog (Cost): ', total_cost)
