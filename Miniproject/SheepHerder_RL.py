@@ -254,7 +254,7 @@ def reset_level():
         dog_position = [random.randint(0, 31), random.randint(0, 31)]
         sheep_position = [random.randint(1, 30), random.randint(1, 30)]
     else:
-        # Positions for layout after training starting positions
+        # Positions for layout after training starting positions (hardcoded)
         fold_position = [15, 15]  
         dog_position = [1, 1]
         sheep_position = [27, 22]
@@ -395,6 +395,42 @@ def move_sheep(direction: tuple):
 
     return reward, done
 
+#  given a direction tuple, returns a char representing the movement direction
+def direction_to_char(direction: tuple):
+    char_dict = {(0, -1): '^',
+                 (1, 0): '>',
+                 (0, 1): 'v',
+                 (-1, 0): '<'}
+    return char_dict[direction]
+
+# prints the current level layout. Supplying a list of movement tuples (x, y, override) will include them
+def print_level(overrides: list = []):
+    if len(overrides) == 0: # if no list was supplied, print level as-is
+        for y in range(level_height):
+            to_print = ""
+            for x in range(level_width):
+                to_print += level_layout[y][x] + " "
+            print(to_print)
+
+    else:
+        # create a dictionary based on the list
+        location_overrides = {}
+        for l in overrides:
+            location = (l[0], l[1])
+            location_overrides[location] = l[2]
+
+        for y in range(level_height):
+            to_print = ""
+            for x in range(level_width):
+                if not len(location_overrides) > 0:
+                    to_print += level_layout[y][x] + " "
+                else:
+                    if (x, y) in location_overrides:
+                        to_print += location_overrides.pop((x, y)) + " "
+                    else:
+                        to_print += level_layout[y][x] + " "
+            print(to_print)
+
 
 # moves the dog, returning a reward and whether it completed the level. Updates level
 def move_dog(direction: tuple):
@@ -417,7 +453,7 @@ def move_dog(direction: tuple):
         print('Dog on fold')
 
     if distance(current_dog_pos, current_sheep_pos) == 1:
-        sheep_direction = find_relative_pos(current_dog_pos, current_sheep_pos)
+        sheep_direction = find_relative_pos(current_sheep_pos, current_dog_pos)
         new_reward, done = move_sheep(sheep_direction)
         reward += new_reward
 
@@ -443,6 +479,7 @@ def take_action(action):
 def train_RL():
     print('Training started')
     global q_table, training
+    training = True
 
     for i in range(1, episodes + 1):
         print(f'New level:\t Episode\t{i}/{episodes}')
@@ -476,20 +513,27 @@ def train_RL():
                 print(f'Long training: {epochs} epochs passed.')
 
     print("Training finished.")
-    training = False
 
 
 def run_sheepherder():
+    global training
+    training = False
+
     print("Setting up scene")
-    # TODO: Use test scene
+    reset_level()
 
     state = find_current_state()
     old_epoch, epochs, reward = 0, 0, 0
     done = False
     auto_continue = False
 
+    print_level()
+
     while not done:
         print(f"Epoch\t{epochs + 1}")
+
+        old_dog_position = current_dog_pos
+        old_sheep_position = current_sheep_pos
 
         action = np.argmax(q_table[state])
         next_state, reward, done = take_action(action)
@@ -497,13 +541,22 @@ def run_sheepherder():
         state = next_state
         epochs += 1
 
-        if not auto_continue:
-            # TODO: print level
-            print("map")
+        if not auto_continue: # print level
+            movements = []
+            if not current_sheep_pos == old_sheep_position: # sheep does not always move
+                sheep_dir = find_relative_pos(current_sheep_pos, old_sheep_position)
+                movements.append((old_sheep_position[0], old_sheep_position[1], direction_to_char(sheep_dir)))
+
+            # dog always moves
+            dog_dir = find_relative_pos(current_dog_pos, old_dog_position)
+            movements.append((old_dog_position[0], old_dog_position[1], direction_to_char(dog_dir)))
+
+            print_level(movements)
 
         # TODO: print info about step
 
         if done:
+            print_level()
             print(f"Level done at {epochs} epocs.")
 
         elif not auto_continue:  # press to continue
@@ -518,7 +571,7 @@ train_RL()
 
 def print_q_table():
     print("Q_table is as follows:")
-    print("\tMov_u\t\t\tMov_r\t\t\tMov_d\t\t\tMod_l")
+    print("\tMov_u\t\t\tMov_r\t\t\tMov_d\t\t\tMov_l")
     print(q_table)
 
 
