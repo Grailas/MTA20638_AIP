@@ -2,6 +2,7 @@ import random
 import numpy as np
 
 debug = False
+training = True
 
 # level information
 level_layout = []
@@ -247,11 +248,16 @@ def reset_level():
          '_', '_', '_', '_', '_', '_', '_', '_', '_', '_',
          '_', '_', '_', '_', '_', '_', '_', '_', '_', '_',
          '_', '_']]
-
-    # Randomize starting positions
-    fold_position = [random.randint(1, 30), random.randint(1, 30)]  # TODO: Consider different placement
-    dog_position = [random.randint(0, 31), random.randint(0, 31)]
-    sheep_position = [random.randint(1, 30), random.randint(1, 30)]
+    if training:
+        # Randomize starting positions
+        fold_position = [random.randint(1, 30), random.randint(1, 30)]  # TODO: Consider different placement
+        dog_position = [random.randint(0, 31), random.randint(0, 31)]
+        sheep_position = [random.randint(1, 30), random.randint(1, 30)]
+    else:
+        # Positions for layout after training starting positions
+        fold_position = [15, 15]  
+        dog_position = [1, 1]
+        sheep_position = [27, 22]
 
     level_layout[fold_position[1]][fold_position[0]] = 'f'
 
@@ -436,7 +442,7 @@ def take_action(action):
 
 def train_RL():
     print('Training started')
-    global q_table
+    global q_table, training
 
     for i in range(1, episodes + 1):
         print(f'New level:\t Episode\t{i}/{episodes}')
@@ -470,6 +476,7 @@ def train_RL():
                 print(f'Long training: {epochs} epochs passed.')
 
     print("Training finished.")
+    training = False
 
 
 def run_sheepherder():
