@@ -2,6 +2,8 @@ from queue import PriorityQueue
 import copy
 import random
 
+randomized = False  # Defines wether or not to use a randomized level.
+
 # level information
 #  legend: _ = open, # = blocked, f = fold, s = sheep, d = dog
 level_layout = [
@@ -133,7 +135,6 @@ level_layout = [
      '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 
      '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 
      '_', '_']]
-
 comp_layout = [
     ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
     ['_', 'd', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
@@ -168,25 +169,40 @@ comp_layout = [
     ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
     ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_']]
 
-#Randomize starting positions
-fold_position = [random.randint(0,31), random.randint(0,31)]
-dog_position = [random.randint(0,31), random.randint(0,31)]
-sheep_position = [random.randint(1,30), random.randint(1,30)]
+fold_position = []
+dog_position = []
+sheep_position = []
 
-level_layout[fold_position[1]][fold_position[0]] = 'f'
+level_height = 0
+level_width = 0
+number_of_sheep = 0
 
-while sheep_position[0] == fold_position[0] and sheep_position[1] == fold_position[1]:
-    sheep_position = [random.randint(1,30), random.randint(1,30)]
-while sheep_position[0] == dog_position[0] and sheep_position[1] == dog_position[1]:
+if randomized:
+    #Randomize starting positions
+    fold_position = [random.randint(0,31), random.randint(0,31)]
     dog_position = [random.randint(0,31), random.randint(0,31)]
+    sheep_position = [random.randint(1,30), random.randint(1,30)]
 
-level_layout[sheep_position[1]][sheep_position[0]] = 's'
-level_layout[dog_position[1]][dog_position[0]] = 'd'
+    level_layout[fold_position[1]][fold_position[0]] = 'f'
 
+    while sheep_position[0] == fold_position[0] and sheep_position[1] == fold_position[1]:
+        sheep_position = [random.randint(1,30), random.randint(1,30)]
+    while sheep_position[0] == dog_position[0] and sheep_position[1] == dog_position[1]:
+        dog_position = [random.randint(0,31), random.randint(0,31)]
+
+    level_layout[sheep_position[1]][sheep_position[0]] = 's'
+    level_layout[dog_position[1]][dog_position[0]] = 'd'
+
+    level_height = len(level_layout) 
+    level_width = len(level_layout[0])   
+    number_of_sheep = sum(y.count('s') for y in level_layout)
+
+else:
+    level_height = len(comp_layout) 
+    level_width = len(comp_layout[0])   
+    number_of_sheep = sum(y.count('s') for y in comp_layout)
 
 level_graph = []  # 1D list of nodes
-level_height = len(comp_layout)
-level_width = len(comp_layout[0])
 
 # entity locations
 dog_start = (None, None)
@@ -195,7 +211,6 @@ sheep_start = (None, None)
 
 debug = False
 
-number_of_sheep = sum(y.count('s') for y in comp_layout)
 total_cost = 0
 
 class Node:
@@ -229,7 +244,8 @@ class Node:
 def generate_level_nodes(graph: list, layout: list):
     for y in range(level_height):
         for x in range(level_width):
-            new_node = Node(x, y, comp_layout[y][x])
+            new_node = Node(x, y, layout[y][x])
+            
             graph.append(new_node)  # level_graph[-1]
 
             if layout[y][x] == 'd':
@@ -433,7 +449,10 @@ def run_sheepherder():
     #  setup
     print("Setting up scene")
     global level_graph, total_cost
-    generate_level_nodes(level_graph, comp_layout)
+    if randomized:
+        generate_level_nodes(level_graph, level_layout)
+    else:
+        generate_level_nodes(level_graph, comp_layout)
     connect_neighbors(level_graph)
     print_nodes(level_graph)
 
@@ -468,7 +487,10 @@ def run_sheepherder():
         herding_point = get_herding_point(sheep_path)
 
         # dog information
-        dog_level_layout = get_dog_level_layout(comp_layout, sheep_location, herding_point)
+        if randomized:
+            dog_level_layout = get_dog_level_layout(level_layout, sheep_location, herding_point)
+        else:
+            dog_level_layout = get_dog_level_layout(comp_layout, sheep_location, herding_point)
         dog_graph = []  # 1D list of nodes
         generate_level_nodes(dog_graph, dog_level_layout)
         connect_neighbors(dog_graph)
