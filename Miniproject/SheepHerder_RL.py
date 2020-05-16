@@ -80,10 +80,7 @@ sheep_escape = -10
 dog_move = -1
 dog_approach = 1
 
-# For plotting metrics
-all_epochs = []
-all_penalties = []
-
+# training length
 episodes = 100000
 
 
@@ -417,7 +414,7 @@ def train_RL():
     global q_table, training
 
     for i in range(1, episodes + 1):
-        print('New level')
+        print(f'New level:\t Episode\t{i}/{episodes}')
         reset_level()
         state = find_current_state()
 
@@ -438,24 +435,20 @@ def train_RL():
             new_value = (1 - alpha) * old_value + alpha * (reward + gamma * next_max)
             q_table[state, action] = new_value
 
-            # if reward == -10:  # TODO: penalty for misdirecting sheep? Consider change
-            #     penalties += 1
-
             state = next_state
             epochs += 1
             if done:
                 print(f"Level done at {epochs} epocs.")
 
-            if epochs > 100000:
-                print('eh')
-
-        if i % 100 == 0:
-            print(f"Episode: {i}")
+            if epochs > 0 and epochs % 100000 == 0:
+                print(f'Long training: {epochs} epochs passed.')
 
     print("Training finished.")
     training = False
 
 
+def run_sheepherder():
+    print("Setting up scene")
 
 train_RL()
 
