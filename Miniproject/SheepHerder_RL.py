@@ -1,3 +1,4 @@
+# RL Sheepherder: AIP miniproject by Jonatan Emil Simonsen,	Nicolai Kristensen, Stefan Nordborg Eriksen
 import copy
 import random
 import numpy as np

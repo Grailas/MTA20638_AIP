@@ -1,3 +1,4 @@
+# A* Sheepherder: AIP miniproject by Jonatan Emil Simonsen,	Nicolai Kristensen, Stefan Nordborg Eriksen
 from queue import PriorityQueue
 import copy
 import random
